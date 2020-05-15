@@ -80,6 +80,7 @@ raylet::RayletConnection::RayletConnection(boost::asio::io_service &io_service,
   }
   // If we could not connect to the socket, exit.
   if (ec) {
+    throw std::runtime_error("Unable to connect to the socket.");
     RAY_LOG(FATAL) << "Could not connect to socket " << raylet_socket;
   }
 }
