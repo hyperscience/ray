@@ -13,4 +13,17 @@ diff --git bazel/glog.bzl bazel/glog.bzl
          # For logging.cc.
          "-DHAVE_PREAD",
          "-DHAVE___ATTRIBUTE__",
+diff --git src/utilities.cc src/utilities.cc
+--- src/utilities.cc
++++ src/utilities.cc
+@@ -334,6 +334,9 @@ void SetCrashReason(const CrashReason* r) {
+ }
+ 
+ void InitGoogleLoggingUtilities(const char* argv0) {
++  if (IsGoogleLoggingInitialized()) {
++    ShutdownGoogleLoggingUtilities();
++  }
+   CHECK(!IsGoogleLoggingInitialized())
+       << "You called InitGoogleLogging() twice!";
+   const char* slash = strrchr(argv0, '/');
 -- 
