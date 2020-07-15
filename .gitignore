@@ -176,5 +176,3 @@ tools/prometheus*
 project-id
 .mypy_cache/
 
-# Hyperscience build artifacts
-hs_dist/
