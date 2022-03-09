@@ -54,6 +54,7 @@ raylet::RayletConnection::RayletConnection(instrumented_io_context &io_service,
   Status s = ConnectSocketRetry(socket, raylet_socket, num_retries, timeout);
   // If we could not connect to the socket, exit.
   if (!s.ok()) {
+    throw std::runtime_error("Unable to connect to the socket.");
     RAY_LOG(FATAL) << "Could not connect to socket " << raylet_socket;
   }
   conn_ = ServerConnection::Create(std::move(socket));

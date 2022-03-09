@@ -100,7 +100,7 @@ cdef extern from "ray/core_worker/core_worker.h" nogil:
         int MaxPendingCalls() const
 
     cdef cppclass CCoreWorker "ray::core::CoreWorker":
-        void ConnectToRaylet()
+        void ConnectToRaylet() except +
         CWorkerType GetWorkerType()
         CLanguage GetLanguage()
 
