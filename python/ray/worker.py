@@ -636,6 +636,9 @@ def init(
         _metrics_export_port: Optional[int] = None,
         _system_config: Optional[Dict[str, str]] = None,
         _tracing_startup_hook: Optional[Callable] = None,
+        _raylet_socket_name:_raylet_socket_name[str] = None,
+        _plasma_store_socket_name: Optional[str] = None,
+        _redis_max_clients: Optional[int] = None,
         **kwargs):
     """
     Connect to an existing Ray cluster or start one and connect to it.
@@ -902,7 +905,7 @@ def init(
             num_gpus=num_gpus,
             resources=resources,
             num_redis_shards=None,
-            redis_max_clients=None,
+            redis_max_clients=_redis_max_clients,
             redis_password=_redis_password,
             plasma_directory=_plasma_directory,
             huge_pages=None,
@@ -912,7 +915,8 @@ def init(
             memory=_memory,
             object_store_memory=object_store_memory,
             redis_max_memory=_redis_max_memory,
-            plasma_store_socket_name=None,
+            plasma_store_socket_name=_plasma_store_socket_name,
+            raylet_socket_name=_raylet_socket_name,
             temp_dir=_temp_dir,
             # We need to disable it if runtime env is not set.
             # Uploading happens after core worker is created. And we should
