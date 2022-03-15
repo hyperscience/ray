@@ -637,7 +637,7 @@ def init(
         _metrics_export_port: Optional[int] = None,
         _system_config: Optional[Dict[str, str]] = None,
         _tracing_startup_hook: Optional[Callable] = None,
-        _raylet_socket_name:_raylet_socket_name[str] = None,
+        _raylet_socket_name: Optional[str] = None,
         _plasma_store_socket_name: Optional[str] = None,
         _redis_max_clients: Optional[int] = None,
         **kwargs):
