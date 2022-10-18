@@ -265,7 +265,7 @@ class Worker:
     def set_load_code_from_local(self, load_code_from_local):
         self._load_code_from_local = load_code_from_local
 
-    def put_object(self, value, object_ref=None, owner_address=None):
+    def put_object(self, value, object_ref=None, owner_address=None, pin_object=True):
         """Put value in the local object store with object reference `object_ref`.
 
         This assumes that the value for `object_ref` has not yet been placed in
@@ -313,7 +313,10 @@ class Worker:
         # reference counter.
         return ray.ObjectRef(
             self.core_worker.put_serialized_object_and_increment_local_ref(
-                serialized_value, object_ref=object_ref, owner_address=owner_address
+                serialized_value,
+                object_ref=object_ref,
+                owner_address=owner_address,
+                pin_object=pin_object,
             ),
             # The initial local reference is already acquired internally.
             skip_adding_local_ref=True,
@@ -716,6 +719,9 @@ def init(
     _system_config: Optional[Dict[str, str]] = None,
     _tracing_startup_hook: Optional[Callable] = None,
     _node_name: str = None,
+    _raylet_socket_name: Optional[str] = None,
+    _plasma_store_socket_name: Optional[str] = None,
+    _redis_max_clients: Optional[int] = None,
     **kwargs,
 ) -> BaseContext:
     """
@@ -1004,7 +1010,7 @@ def init(
             num_gpus=num_gpus,
             resources=resources,
             num_redis_shards=None,
-            redis_max_clients=None,
+            redis_max_clients=_redis_max_clients,
             redis_password=_redis_password,
             plasma_directory=_plasma_directory,
             huge_pages=None,
@@ -1014,7 +1020,8 @@ def init(
             memory=_memory,
             object_store_memory=object_store_memory,
             redis_max_memory=_redis_max_memory,
-            plasma_store_socket_name=None,
+            plasma_store_socket_name=_plasma_store_socket_name,
+            raylet_socket_name=_raylet_socket_name,
             temp_dir=_temp_dir,
             storage=storage,
             # We need to disable it if runtime env is not set.
@@ -1855,7 +1862,7 @@ def get(
 @PublicAPI
 @client_mode_hook(auto_init=True)
 def put(
-    value: Any, *, _owner: Optional["ray.actor.ActorHandle"] = None
+    value: Any, *, _owner: Optional["ray.actor.ActorHandle"] = None, weakref: bool = False
 ) -> ray.ObjectRef:
     """Store an object in the object store.
 
@@ -1891,7 +1898,8 @@ def put(
 
     with profiling.profile("ray.put"):
         try:
-            object_ref = worker.put_object(value, owner_address=serialize_owner_address)
+            object_ref = worker.put_object(
+                value, owner_address=serialize_owner_address, pin_object=not weakref)
         except ObjectStoreFullError:
             logger.info(
                 "Put failed since the value was either too large or the "

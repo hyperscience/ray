@@ -100,7 +100,7 @@ cdef extern from "ray/core_worker/core_worker.h" nogil:
         int MaxPendingCalls() const
 
     cdef cppclass CCoreWorker "ray::core::CoreWorker":
-        void ConnectToRaylet()
+        void ConnectToRaylet() except +
         CWorkerType GetWorkerType()
         CLanguage GetLanguage()
 
@@ -323,7 +323,7 @@ cdef extern from "ray/core_worker/core_worker.h" nogil:
 
     cdef cppclass CCoreWorkerProcess "ray::core::CoreWorkerProcess":
         @staticmethod
-        void Initialize(const CCoreWorkerOptions &options)
+        void Initialize(const CCoreWorkerOptions &options) except +
         # Only call this in CoreWorker.__cinit__,
         # use CoreWorker.core_worker to access C++ CoreWorker.
 
