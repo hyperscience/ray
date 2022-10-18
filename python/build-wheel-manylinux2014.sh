@@ -12,15 +12,11 @@ EOF
 chmod +x /usr/bin/nproc
 
 NODE_VERSION="14"
-PYTHONS=("cp36-cp36m"
-         "cp37-cp37m"
-         "cp38-cp38"
+PYTHONS=("cp37-cp37m"
          "cp39-cp39"
          "cp310-cp310")
 
 NUMPY_VERSIONS=("1.14.5"
-                "1.14.5"
-                "1.14.5"
                 "1.19.3"
                 "1.22.0")
 
@@ -68,6 +64,8 @@ pushd python/ray/dashboard/client
 popd
 set -x
 
+# to avoid git error
+git config --global --add safe.directory /ray
 mkdir -p .whl
 for ((i=0; i<${#PYTHONS[@]}; ++i)); do
   PYTHON=${PYTHONS[i]}
