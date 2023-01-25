@@ -35,14 +35,20 @@ echo "java_bin path $java_bin"
 java_home=${java_bin%jre/bin/java}
 export JAVA_HOME="$java_home"
 
-/ray/ci/env/install-bazel.sh
+WORK_DIR=${WORK_DIR:-}
+if [[ -z "${WORK_DIR}" ]]; then
+  echo "Project home not set"
+  WORK_DIR="/ray"
+fi
+
+$WORK_DIR/ci/env/install-bazel.sh
 # Put bazel into the PATH if building Bazel from source
 # export PATH=/root/bazel-3.2.0/output:$PATH:/root/bin
 
 # If converting down to manylinux2010, the following configuration should
 # be set for bazel
 #echo "build --config=manylinux2010" >> /root/.bazelrc
-echo "build --incompatible_linkopts_to_linklibs" >> /root/.bazelrc
+echo "build --incompatible_linkopts_to_linklibs --jobs=4" >> /root/.bazelrc
 
 if [[ -n "${RAY_INSTALL_JAVA:-}" ]]; then
   bazel build //java:ray_java_pkg
