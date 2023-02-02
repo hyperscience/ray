@@ -34,7 +34,7 @@ PY_MMS=(
         "3.10")
 
 NUMPY_VERSIONS=(
-#                "1.14.5" MLE-771: Commenting out due to build failures and not required 
+#                "1.14.5" MLE-771: Commenting out due to build failures and not required
 #                "1.14.5"
 #                "1.14.5"
                 "1.19.3"

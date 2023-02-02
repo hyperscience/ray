@@ -37,7 +37,7 @@ export JAVA_HOME="$java_home"
 
 WORK_DIR=${WORK_DIR:-}
 if [[ -z "${WORK_DIR}" ]]; then
-  echo "Project home not set"
+  echo "WORK_DIR not set"
   WORK_DIR="/ray"
 fi
 
