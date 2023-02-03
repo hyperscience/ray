@@ -1,10 +1,8 @@
 #!/bin/bash
 
-# Cause the script to exit if a single command fails.
-set -e
-
-# Show explicitly which commands are currently running.
-set -x
+# -e : exit if a single command fails
+# -x : output commands that are run
+set -ex
 
 # Much of this is taken from https://github.com/matthew-brett/multibuild.
 # This script uses "sudo", so you may need to type in a password a couple times.
