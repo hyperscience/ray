@@ -15,28 +15,16 @@ DOWNLOAD_DIR=python_downloads
 
 NODE_VERSION="14"
 PY_VERSIONS=(
-#             "3.6.2"  MLE-771: Commenting out due to build failures and not required
-#             "3.7.0"
-#             "3.8.2"
              "3.9.1"
              "3.10.4")
 PY_INSTS=(
-#          "python-3.6.2-macosx10.6.pkg" MLE-771: Commenting out due to build failures and not required
-#          "python-3.7.0-macosx10.6.pkg"
-#          "python-3.8.2-macosx10.9.pkg"
           "python-3.9.1-macosx10.9.pkg"
           "python-3.10.4-macos11.pkg")
 PY_MMS=(
-#        "3.6" MLE-771: Commenting out due to build failures and not required
-#        "3.7"
-#        "3.8"
         "3.9"
         "3.10")
 
 NUMPY_VERSIONS=(
-#                "1.14.5" MLE-771: Commenting out due to build failures and not required
-#                "1.14.5"
-#                "1.14.5"
                 "1.19.3"
                 "1.22.0")
 
@@ -76,12 +64,10 @@ for ((i=0; i<${#PY_VERSIONS[@]}; ++i)); do
     INST_PATH=python_downloads/$PY_INST
     curl $MACPYTHON_URL/"$PY_VERSION"/"$PY_INST" > "$INST_PATH"
     sudo installer -pkg "$INST_PATH" -target /
-    sudo installer -pkg "$INST_PATH" -target /
 
     pushd /tmp
       # Install latest version of pip to avoid brownouts.
-      curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
-      $PYTHON_EXE get-pip.py
+      curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py && $PYTHON_EXE get-pip.py
     popd
   fi
 
