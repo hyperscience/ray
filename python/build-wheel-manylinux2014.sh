@@ -42,6 +42,7 @@ $WORK_DIR/ci/env/install-bazel.sh
 # If converting down to manylinux2010, the following configuration should
 # be set for bazel
 #echo "build --config=manylinux2010" >> /root/.bazelrc
+# we limit to running 4 parallel jobs as we run into OOM in CCI if we just let it run wild.
 echo "build --incompatible_linkopts_to_linklibs --jobs=4" >> /root/.bazelrc
 
 if [[ -n "${RAY_INSTALL_JAVA:-}" ]]; then
