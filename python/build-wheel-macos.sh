@@ -14,25 +14,17 @@ MACPYTHON_PY_PREFIX=/Library/Frameworks/Python.framework/Versions
 DOWNLOAD_DIR=python_downloads
 
 NODE_VERSION="14"
-PY_VERSIONS=("3.6.2"
-             "3.7.0"
-             "3.8.2"
+PY_VERSIONS=("3.7.9"
              "3.9.1"
              "3.10.4")
-PY_INSTS=("python-3.6.2-macosx10.6.pkg"
-          "python-3.7.0-macosx10.6.pkg"
-          "python-3.8.2-macosx10.9.pkg"
+PY_INSTS=("python-3.7.9-macosx10.9.pkg"
           "python-3.9.1-macosx10.9.pkg"
           "python-3.10.4-macos11.pkg")
-PY_MMS=("3.6"
-        "3.7"
-        "3.8"
+PY_MMS=("3.7"
         "3.9"
         "3.10")
 
 NUMPY_VERSIONS=("1.14.5"
-                "1.14.5"
-                "1.14.5"
                 "1.19.3"
                 "1.22.0")
 
@@ -72,7 +64,8 @@ for ((i=0; i<${#PY_VERSIONS[@]}; ++i)); do
     INST_PATH=python_downloads/$PY_INST
     curl $MACPYTHON_URL/"$PY_VERSION"/"$PY_INST" > "$INST_PATH"
     sudo installer -pkg "$INST_PATH" -target /
-    installer -pkg "$INST_PATH" -target /
+    # Commenting out the bottom as the above calls sudo installer anyway
+    # installer -pkg "$INST_PATH" -target /
 
     pushd /tmp
       # Install latest version of pip to avoid brownouts.
@@ -103,6 +96,11 @@ for ((i=0; i<${#PY_VERSIONS[@]}; ++i)); do
       echo "TRAVIS_COMMIT variable not set - required to populated ray.__commit__."
       exit 1
     fi
+
+    # Some step in the build proces tries to call `python`, but the installed packages don't create symbolics.
+    # Therefore, create a symbolic link in the /bin directory.
+    ln -sf $PYTHON_EXE $MACPYTHON_PY_PREFIX/$PY_MM/bin/python
+
     # Add the correct Python to the path and build the wheel. This is only
     # needed so that the installation finds the cython executable.
     # build ray wheel

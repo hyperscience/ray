@@ -585,7 +585,7 @@ def build(build_python, build_java, build_cpp):
 
     return bazel_invoke(
         subprocess.check_call,
-        bazel_precmd_flags + ["build"] + bazel_flags + ["--local_ram_resources=7168"] + ["--jobs=1"] + ["--"] + bazel_targets,
+        bazel_precmd_flags + ["build"] + bazel_flags + ["--jobs=2"] + ["--"] + bazel_targets,
         env=bazel_env,
     )
 
