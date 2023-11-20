@@ -719,6 +719,7 @@ class Worker:
         object_ref: Optional["ray.ObjectRef"] = None,
         owner_address: Optional[str] = None,
         _is_experimental_channel: bool = False,
+        pin_object: bool = True,
     ):
         """Put value in the local object store with object reference `object_ref`.
 
@@ -774,7 +775,8 @@ class Worker:
 
         # If the object is mutable, then the raylet should never read the
         # object. Instead, clients will keep the object pinned.
-        pin_object = not _is_experimental_channel
+        _pin_object = not _is_experimental_channel
+        _pin_object = _pin_object or pin_object
 
         # This *must* be the first place that we construct this python
         # ObjectRef because an entry with 0 local references is created when
@@ -1437,6 +1439,9 @@ def init(
         "_tracing_startup_hook", None
     )
     _node_name: str = kwargs.pop("_node_name", None)
+    _raylet_socket_name: str = kwargs.pop("_raylet_socket_name", None)
+    _plasma_store_socket_name: str = kwargs.pop("_plasma_store_socket_name", None)
+    _redis_max_clients: str = kwargs.pop("_redis_max_clients", None)
     # Fix for https://github.com/ray-project/ray/issues/26729
     _skip_env_hook: bool = kwargs.pop("_skip_env_hook", False)
 
@@ -1655,7 +1660,7 @@ def init(
             resources=resources,
             labels=labels,
             num_redis_shards=None,
-            redis_max_clients=None,
+            redis_max_clients=_redis_max_clients,
             redis_password=_redis_password,
             plasma_directory=_plasma_directory,
             huge_pages=None,
@@ -1665,6 +1670,8 @@ def init(
             memory=_memory,
             object_store_memory=object_store_memory,
             redis_max_memory=_redis_max_memory,
+            plasma_store_socket_name=_plasma_store_socket_name,
+            raylet_socket_name=_raylet_socket_name,
             plasma_store_socket_name=None,
             temp_dir=_temp_dir,
             storage=storage,
@@ -2689,6 +2696,7 @@ def put(
     value: Any,
     *,
     _owner: Optional["ray.actor.ActorHandle"] = None,
+    weakref: bool = False,
 ) -> "ray.ObjectRef":
     """Store an object in the object store.
 
@@ -2734,7 +2742,8 @@ def put(
 
     with profiling.profile("ray.put"):
         try:
-            object_ref = worker.put_object(value, owner_address=serialize_owner_address)
+            object_ref = worker.put_object(
+                value, owner_address=serialize_owner_address, pin_object=not weakref)
         except ObjectStoreFullError:
             logger.info(
                 "Put failed since the value was either too large or the "
