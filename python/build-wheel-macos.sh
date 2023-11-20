@@ -24,25 +24,19 @@ else
           "3.11")
 fi
 
-if [[ -n "${SKIP_DEP_RES}" ]]; then
-  ./ci/env/install-bazel.sh
+# Download and install Bazel
+curl -f -s -L -R -o $HOME/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.16.0/bazelisk-darwin-amd64
+chmod +x $HOME/bin/bazel
+export PATH=$PATH:$HOME/bin
 
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+# Download miniconda
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+# Run in unattended mode and become aware it's installed
+bash Miniconda3-latest-MacOSX-x86_64.sh -b -u -p $HOME/miniconda
+export PATH=$PATH:$HOME/miniconda/bin
 
-  if [ "$(uname -m)" = "arm64" ]; then
-    curl -o- https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh | bash
-  else
-    curl -o- https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh | bash
-  fi
-
-  conda init bash
-  source ~/.bash_profile
-
-  # Use the latest version of Node.js in order to build the dashboard.
-  source "$HOME"/.nvm/nvm.sh
-  nvm install $NODE_VERSION
-  nvm use $NODE_VERSION
-fi
+# Provide the build with the correct paths for bazel and conda
+echo "export PATH=$PATH" >> ~/.bash_profile
 
 # Build the dashboard so its static assets can be included in the wheel.
 pushd python/ray/dashboard/client
@@ -63,7 +57,7 @@ for ((i=0; i<${#PY_MMS[@]}; ++i)); do
   git clean -f -f -x -d -e .whl -e $DOWNLOAD_DIR -e python/ray/dashboard/client -e dashboard/client
 
   # Install python using conda. This should be easier to produce consistent results in buildkite and locally.
-  [ ! -f "$HOME/.bash_profile" ] && conda init bash
+  conda init bash
   source ~/.bash_profile
   conda create -y -n "$CONDA_ENV_NAME"
   conda activate "$CONDA_ENV_NAME"
@@ -96,10 +90,6 @@ for ((i=0; i<${#PY_MMS[@]}; ++i)); do
     fi
 
     sed -i .bak "s/{{RAY_COMMIT_SHA}}/$TRAVIS_COMMIT/g" ray/__init__.py && rm ray/__init__.py.bak
-
-    # Some step in the build proces tries to call `python`, but the installed packages don't create symbolics.
-    # Therefore, create a symbolic link in the /bin directory.
-    ln -sf $PYTHON_EXE $MACPYTHON_PY_PREFIX/$PY_MM/bin/python
 
     # Add the correct Python to the path and build the wheel. This is only
     # needed so that the installation finds the cython executable.
