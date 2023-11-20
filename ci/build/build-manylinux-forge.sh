@@ -39,7 +39,8 @@ ln -sf "$(which bazelisk)" /usr/local/bin/bazel
 {
   echo "build --config=ci"
   echo "build --announce_rc"
-  if [[ "${BUILDKITE_BAZEL_CACHE_URL:-}" != "" ]]; then
-    echo "build:ci --remote_cache=${BUILDKITE_BAZEL_CACHE_URL:-}"
-  fi
+  # if [[ "${BUILDKITE_BAZEL_CACHE_URL:-}" != "" ]]; then
+  #   echo "build:ci --remote_cache=${BUILDKITE_BAZEL_CACHE_URL:-}"
+  # fi
+  echo "build:ci"
 } > ~/.bazelrc
