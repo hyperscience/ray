@@ -85,6 +85,10 @@ for ((i=0; i<${#PY_MMS[@]}; ++i)); do
 
     sed -i .bak "s/{{RAY_COMMIT_SHA}}/$TRAVIS_COMMIT/g" ray/_version.py && rm ray/_version.py.bak
 
+    # Some step in the build proces tries to call `python`, but the installed packages don't create symbolics.
+    # Therefore, create a symbolic link in the /bin directory.
+    ln -sf $PYTHON_EXE $MACPYTHON_PY_PREFIX/$PY_MM/bin/python
+
     # Add the correct Python to the path and build the wheel. This is only
     # needed so that the installation finds the cython executable.
     # build ray wheel
