@@ -1672,7 +1672,6 @@ def init(
             redis_max_memory=_redis_max_memory,
             plasma_store_socket_name=_plasma_store_socket_name,
             raylet_socket_name=_raylet_socket_name,
-            plasma_store_socket_name=None,
             temp_dir=_temp_dir,
             storage=storage,
             _system_config=_system_config,
