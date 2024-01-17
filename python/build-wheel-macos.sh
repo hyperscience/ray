@@ -12,10 +12,7 @@ NODE_VERSION="14"
 
 if [ "$(uname -m)" = "arm64" ]; then
   # We Don't build wheels for Python 3.7 on Apple Silicon
-  PY_MMS=("3.8"
-          "3.9"
-          "3.10"
-          "3.11")
+  PY_MMS=("3.9")
 else
   PY_MMS=("3.7"
           "3.8"
@@ -32,18 +29,18 @@ export PATH=$PATH:$HOME/bin
 # Download miniconda
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
 # Run in unattended mode and become aware it's installed
-bash Miniconda3-latest-MacOSX-x86_64.sh -b -u -p $HOME/miniconda
+#bash Miniconda3-latest-MacOSX-x86_64.sh -b -u -p $HOME/miniconda
 export PATH=$PATH:$HOME/miniconda/bin
 
 # Provide the build with the correct paths for bazel and conda
 echo "export PATH=$PATH" >> ~/.bash_profile
 
 # Build the dashboard so its static assets can be included in the wheel.
-pushd python/ray/dashboard/client
-  source "$HOME"/.nvm/nvm.sh
-  npm ci
-  npm run build
-popd
+#pushd python/ray/dashboard/client
+#  source "$HOME"/.nvm/nvm.sh
+#  npm ci
+#  npm run build
+#popd
 
 mkdir -p .whl
 
@@ -59,10 +56,10 @@ for ((i=0; i<${#PY_MMS[@]}; ++i)); do
   # Install python using conda. This should be easier to produce consistent results in buildkite and locally.
   conda init bash
   source ~/.bash_profile
-  conda create -y -n "$CONDA_ENV_NAME"
+#  conda create -y -n "$CONDA_ENV_NAME"
   conda activate "$CONDA_ENV_NAME"
-  conda remove -y python || true
-  conda install -y python="$PY_MM"
+#  conda remove -y python || true
+#  conda install -y python="$PY_MM"
 
   # NOTE: We expect conda to set the PATH properly.
   PIP_CMD=pip
