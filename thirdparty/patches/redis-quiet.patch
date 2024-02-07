@@ -89,3 +89,4 @@ index ecbd2753d..737a14777 100644
 
  Makefile.dep:
  	-$(REDIS_CC) -MM $(ALL_SOURCES) > Makefile.dep 2> /dev/null || true
+
