@@ -6,22 +6,42 @@ set -e
 # Show explicitly which commands are currently running.
 set -x
 
+function is_arm_mac() {
+  if [[ $(sysctl -n machdep.cpu.brand_string) =~ "Apple" ]]; then
+    echo true
+  else
+    echo false
+  fi
+}
+
 DOWNLOAD_DIR=python_downloads
 
 NODE_VERSION="14"
 
-PY_MMS=("3.9" "3.10" "3.11" "3.12" "3.13")
+if [ ${#PY_MMS[@]} -eq 0 ]; then
+  PY_MMS=("3.11" "3.12" "3.13")
+fi
 
 # Download and install Bazel
-curl -f -s -L -R -o $HOME/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.16.0/bazelisk-darwin-amd64
+if [[ $(is_arm_mac) == "true" ]]; then
+  curl -f -s -L -R -o $HOME/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.16.0/bazelisk-darwin-arm64
+else
+  curl -f -s -L -R -o $HOME/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.16.0/bazelisk-darwin-amd64
+fi
+
 chmod +x $HOME/bin/bazel
 export PATH=$PATH:$HOME/bin
 
 # Download miniconda
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+if [[ $(is_arm_mac) == "true" ]]; then
+  wget -O miniconda_install.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh
+else
+  wget -O miniconda_install.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+fi
+
 # Run in unattended mode and become aware it's installed
-bash Miniconda3-latest-MacOSX-x86_64.sh -b -u -p $HOME/miniconda
-export PATH=$PATH:$HOME/miniconda/bin
+bash miniconda_install.sh -b -u -p $HOME/miniconda
+source ~/miniconda/bin/activate
 
 # Provide the build with the correct paths for bazel and conda
 echo "export PATH=$PATH" >> ~/.bash_profile
@@ -45,8 +65,6 @@ for ((i=0; i<${#PY_MMS[@]}; ++i)); do
   git clean -f -f -x -d -e .whl -e $DOWNLOAD_DIR -e python/ray/dashboard/client -e dashboard/client
 
   # Install python using conda. This should be easier to produce consistent results in buildkite and locally.
-  conda init bash
-  source ~/.bash_profile
   conda create -y -n "$CONDA_ENV_NAME"
   conda activate "$CONDA_ENV_NAME"
   conda remove -y python || true
@@ -83,8 +101,9 @@ for ((i=0; i<${#PY_MMS[@]}; ++i)); do
     # needed so that the installation finds the cython executable.
     # build ray wheel
     $PYTHON_EXE setup.py bdist_wheel
+    # Disabled because we don't use this.
     # build ray-cpp wheel
-    RAY_INSTALL_CPP=1 $PYTHON_EXE setup.py bdist_wheel
+    # RAY_INSTALL_CPP=1 $PYTHON_EXE setup.py bdist_wheel
     mv dist/*.whl ../.whl/
   popd
 
