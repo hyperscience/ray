@@ -12,25 +12,19 @@ NODE_VERSION="14"
 
 PY_MMS=("3.9" "3.10" "3.11" "3.12" "3.13")
 
-if [[ -n "${SKIP_DEP_RES}" ]]; then
-  ./ci/env/install-bazel.sh
+# Download and install Bazel
+curl -f -s -L -R -o $HOME/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.16.0/bazelisk-darwin-amd64
+chmod +x $HOME/bin/bazel
+export PATH=$PATH:$HOME/bin
 
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+# Download miniconda
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+# Run in unattended mode and become aware it's installed
+bash Miniconda3-latest-MacOSX-x86_64.sh -b -u -p $HOME/miniconda
+export PATH=$PATH:$HOME/miniconda/bin
 
-  if [ "$(uname -m)" = "arm64" ]; then
-    curl -o- https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh | bash
-  else
-    curl -sSL -o- https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-x86_64.sh | bash
-  fi
-
-  conda init bash
-  source ~/.bash_profile
-
-  # Use the latest version of Node.js in order to build the dashboard.
-  source "$HOME"/.nvm/nvm.sh
-  nvm install $NODE_VERSION
-  nvm use $NODE_VERSION
-fi
+# Provide the build with the correct paths for bazel and conda
+echo "export PATH=$PATH" >> ~/.bash_profile
 
 # Build the dashboard so its static assets can be included in the wheel.
 pushd python/ray/dashboard/client
@@ -51,7 +45,7 @@ for ((i=0; i<${#PY_MMS[@]}; ++i)); do
   git clean -f -f -x -d -e .whl -e $DOWNLOAD_DIR -e python/ray/dashboard/client -e dashboard/client
 
   # Install python using conda. This should be easier to produce consistent results in buildkite and locally.
-  [ ! -f "$HOME/.bash_profile" ] && conda init bash
+  conda init bash
   source ~/.bash_profile
   conda create -y -n "$CONDA_ENV_NAME"
   conda activate "$CONDA_ENV_NAME"
