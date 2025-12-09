@@ -677,6 +677,7 @@ def build(build_python, build_java, build_cpp, build_redis):
         + bazel_precmd_flags
         + ["build"]
         + bazel_flags
+        + ["--jobs=6"]
         + ["--"]
         + bazel_targets,
         env=bazel_env,
