@@ -28,8 +28,8 @@ export RAY_INSTALL_JAVA="${RAY_INSTALL_JAVA:-0}"
 
 # Python version key, interpreter version code
 PYTHON_VERSIONS=(
-  "py39 cp39-cp39"
-  "py310 cp310-cp310"
+  # "py39 cp39-cp39"
+  # "py310 cp310-cp310"
   "py311 cp311-cp311"
   "py312 cp312-cp312"
   "py313 cp313-cp313"
@@ -57,6 +57,7 @@ for PYTHON_VERSIONS in "${PYTHON_VERSIONS[@]}" ; do
   # and the -e flag ensures that we don't remove the .whl directory, the
   # dashboard directory and jars directory, as well as the compiled
   # dependency constraints.
+  git config --global --add safe.directory /ray
   git clean -f -f -x -d -e .whl -e python/ray/dashboard/client -e dashboard/client -e python/ray/jars -e python/requirements_compiled.txt
 
   ./ci/build/build-manylinux-wheel.sh "${PYTHON}"
