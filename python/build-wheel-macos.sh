@@ -22,6 +22,8 @@ if [ ${#PY_MMS[@]} -eq 0 ]; then
   PY_MMS=("3.11" "3.12" "3.13")
 fi
 
+VENV_ROOT="$HOME/.ray_venvs"
+
 # Download and install Bazel
 if [[ $(is_arm_mac) == "true" ]]; then
   curl -f -s -L -R -o $HOME/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.16.0/bazelisk-darwin-arm64
@@ -32,18 +34,7 @@ fi
 chmod +x $HOME/bin/bazel
 export PATH=$PATH:$HOME/bin
 
-# Download miniconda
-if [[ $(is_arm_mac) == "true" ]]; then
-  wget -O miniconda_install.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh
-else
-  wget -O miniconda_install.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
-fi
-
-# Run in unattended mode and become aware it's installed
-bash miniconda_install.sh -b -u -p $HOME/miniconda
-source ~/miniconda/bin/activate
-
-# Provide the build with the correct paths for bazel and conda
+# Provide the build with the correct paths for bazel
 echo "export PATH=$PATH" >> ~/.bash_profile
 
 # Build the dashboard so its static assets can be included in the wheel.
@@ -54,23 +45,32 @@ pushd python/ray/dashboard/client
 popd
 
 mkdir -p .whl
+mkdir -p "$VENV_ROOT"
 
 for ((i=0; i<${#PY_MMS[@]}; ++i)); do
   PY_MM=${PY_MMS[i]}
-  CONDA_ENV_NAME="p$PY_MM"
+  VENV_NAME="p$PY_MM"
+  VENV_PATH="$VENV_ROOT/$VENV_NAME"
 
   # The -f flag is passed twice to also run git clean in the arrow subdirectory.
   # The -d flag removes directories. The -x flag ignores the .gitignore file,
   # and the -e flag ensures that we don't remove the .whl directory.
   git clean -f -f -x -d -e .whl -e $DOWNLOAD_DIR -e python/ray/dashboard/client -e dashboard/client
 
-  # Install python using conda. This should be easier to produce consistent results in buildkite and locally.
-  conda create -y -n "$CONDA_ENV_NAME"
-  conda activate "$CONDA_ENV_NAME"
-  conda remove -y python || true
-  conda install -y python="$PY_MM"
+  # Install the Python version if it doesn’t exist
+  if ! pyenv versions --bare | grep -q "^$PY_MM$"; then
+      pyenv install "$PY_MM"
+  fi
 
-  # NOTE: We expect conda to set the PATH properly.
+  # Use the exact pyenv-installed Python for the venv
+  PYTHON_EXE="$(pyenv prefix "$PY_MM")/bin/python"
+
+  # Remove old venv and create new one with the correct Python
+  rm -rf "$VENV_PATH"
+  $PYTHON_EXE -m venv "$VENV_PATH"
+  source "$VENV_PATH/bin/activate"
+
+  # NOTE: venv activates the correct PATH instead.
   PIP_CMD=pip
 
   $PIP_CMD install --upgrade pip
@@ -102,6 +102,8 @@ for ((i=0; i<${#PY_MMS[@]}; ++i)); do
   popd
 
   # cleanup
-  conda deactivate
-  conda env remove -y -n "$CONDA_ENV_NAME"
+  deactivate
+  rm -rf "$VENV_PATH"
 done
+
+pyenv local --unset
