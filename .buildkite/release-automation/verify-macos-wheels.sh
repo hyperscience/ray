@@ -15,7 +15,7 @@ if [[ $# -ne 1 ]]; then
 fi
 
 MAC_ARCH="$1" # First argument is the architecture of the machine, e.g. x86_64, arm64
-export USE_BAZEL_VERSION="${USE_BAZEL_VERSION:-6.5.0}"
+export USE_BAZEL_VERSION="${USE_BAZEL_VERSION:-6.6.0}"
 
 # Sets RAY_VERSION and RAY_COMMIT
 source .buildkite/release-automation/set-ray-version.sh
