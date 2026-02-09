@@ -29,8 +29,8 @@ load("@bazel_skylib//lib:versions.bzl", "versions")
 
 # Please keep this in sync with the .bazelversion file.
 versions.check(
-    maximum_bazel_version = "6.6.0",
-    minimum_bazel_version = "6.6.0",
+    maximum_bazel_version = "6.5.0",
+    minimum_bazel_version = "6.5.0",
 )
 
 # Tools to generate `compile_commands.json` to enable awesome tooling of the C language family.
