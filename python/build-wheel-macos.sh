@@ -12,19 +12,12 @@ NODE_VERSION="14"
 
 PY_MMS=("3.9" "3.10" "3.11" "3.12")
 
+VENV_ROOT="$HOME/.ray_venvs"
+
 if [[ -n "${SKIP_DEP_RES}" ]]; then
   ./ci/env/install-bazel.sh
 
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-
-  if [ "$(uname -m)" = "arm64" ]; then
-    curl -o- https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh | bash
-  else
-    curl -o- https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh | bash
-  fi
-
-  conda init bash
-  source ~/.bash_profile
 
   # Use the latest version of Node.js in order to build the dashboard.
   source "$HOME"/.nvm/nvm.sh
@@ -40,25 +33,33 @@ pushd python/ray/dashboard/client
 popd
 
 mkdir -p .whl
+mkdir -p "$VENV_ROOT"
 
 for ((i=0; i<${#PY_MMS[@]}; ++i)); do
   PY_MM=${PY_MMS[i]}
-  CONDA_ENV_NAME="p$PY_MM"
- 
+  VENV_NAME="p$PY_MM"
+  VENV_PATH="$VENV_ROOT/$VENV_NAME"
+
   # The -f flag is passed twice to also run git clean in the arrow subdirectory.
   # The -d flag removes directories. The -x flag ignores the .gitignore file,
   # and the -e flag ensures that we don't remove the .whl directory.
   git clean -f -f -x -d -e .whl -e $DOWNLOAD_DIR -e python/ray/dashboard/client -e dashboard/client
 
-  # Install python using conda. This should be easier to produce consistent results in buildkite and locally.
-  [ ! -f "$HOME/.bash_profile" ] && conda init bash
-  source ~/.bash_profile
-  conda create -y -n "$CONDA_ENV_NAME"
-  conda activate "$CONDA_ENV_NAME"
-  conda remove -y python || true
-  conda install -y python="$PY_MM"
 
-  # NOTE: We expect conda to set the PATH properly.
+  # Install the Python version if it doesn’t exist
+  if ! pyenv versions --bare | grep -q "^$PY_MM$"; then
+      pyenv install "$PY_MM"
+  fi
+
+  # Use the exact pyenv-installed Python for the venv
+  PYTHON_EXE="$(pyenv prefix "$PY_MM")/bin/python"
+
+  # Remove old venv and create new one with the correct Python
+  rm -rf "$VENV_PATH"
+  $PYTHON_EXE -m venv "$VENV_PATH"
+  source "$VENV_PATH/bin/activate"
+
+  # NOTE: venv activates the correct PATH instead.
   PIP_CMD=pip
   PYTHON_EXE=python
 
@@ -95,6 +96,8 @@ for ((i=0; i<${#PY_MMS[@]}; ++i)); do
   popd
 
   # cleanup
-  conda deactivate
-  conda env remove -y -n "$CONDA_ENV_NAME"
+  deactivate
+  rm -rf "$VENV_PATH"
 done
+
+pyenv local --unset
