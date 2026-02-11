@@ -32,18 +32,13 @@ fi
 chmod +x $HOME/bin/bazel
 export PATH=$PATH:$HOME/bin
 
-# Download miniconda
-if [[ $(is_arm_mac) == "true" ]]; then
-  wget -O miniconda_install.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh
-else
-  wget -O miniconda_install.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
-fi
+# Initialize pyenv
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init --path)"
+eval "$(pyenv init -)"
 
-# Run in unattended mode and become aware it's installed
-bash miniconda_install.sh -b -u -p $HOME/miniconda
-source ~/miniconda/bin/activate
-
-# Provide the build with the correct paths for bazel and conda
+# Provide the build with the correct paths for bazel and pyenv
 echo "export PATH=$PATH" >> ~/.bash_profile
 
 # Build the dashboard so its static assets can be included in the wheel.
@@ -57,20 +52,26 @@ mkdir -p .whl
 
 for ((i=0; i<${#PY_MMS[@]}; ++i)); do
   PY_MM=${PY_MMS[i]}
-  CONDA_ENV_NAME="p$PY_MM"
+  PYENV_VENV_NAME="p$PY_MM"
 
   # The -f flag is passed twice to also run git clean in the arrow subdirectory.
   # The -d flag removes directories. The -x flag ignores the .gitignore file,
   # and the -e flag ensures that we don't remove the .whl directory.
   git clean -f -f -x -d -e .whl -e $DOWNLOAD_DIR -e python/ray/dashboard/client -e dashboard/client
 
-  # Install python using conda. This should be easier to produce consistent results in buildkite and locally.
-  conda create -y -n "$CONDA_ENV_NAME"
-  conda activate "$CONDA_ENV_NAME"
-  conda remove -y python || true
-  conda install -y python="$PY_MM"
+  # Install Python version using pyenv if not already installed
+  if ! pyenv versions | grep -q "$PY_MM"; then
+    echo "Installing Python $PY_MM with pyenv..."
+    pyenv install "$PY_MM"
+  fi
 
-  # NOTE: We expect conda to set the PATH properly.
+  # Set the Python version for this session
+  pyenv shell "$PY_MM"
+
+  # Create a virtual environment
+  python -m venv "$PYENV_VENV_NAME"
+  source "$PYENV_VENV_NAME/bin/activate"
+
   PIP_CMD=pip
 
   $PIP_CMD install --upgrade pip
@@ -102,6 +103,6 @@ for ((i=0; i<${#PY_MMS[@]}; ++i)); do
   popd
 
   # cleanup
-  conda deactivate
-  conda env remove -y -n "$CONDA_ENV_NAME"
+  deactivate
+  rm -rf "$PYENV_VENV_NAME"
 done
