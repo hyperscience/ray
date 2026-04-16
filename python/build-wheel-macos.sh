@@ -58,8 +58,8 @@ for ((i=0; i<${#PY_MMS[@]}; ++i)); do
   git clean -f -f -x -d -e .whl -e $DOWNLOAD_DIR -e python/ray/dashboard/client -e dashboard/client
 
   # Install the Python version if it doesn’t exist
-  if ! pyenv versions --bare | grep -q "^$PY_MM$"; then
-      pyenv install "$PY_MM"
+  if ! pyenv versions --bare | grep -qE "^${PY_MM}\.[0-9]+$"; then
+    pyenv install -f "$PY_MM"
   fi
 
   # Use the exact pyenv-installed Python for the venv
