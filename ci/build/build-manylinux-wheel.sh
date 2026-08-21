@@ -2,7 +2,7 @@
 set -exuo pipefail
 
 PYTHON="$1"
-TRAVIS_COMMIT="${TRAVIS_COMMIT:-$BUILDKITE_COMMIT}"
+TRAVIS_COMMIT="${TRAVIS_COMMIT:-${BUILDKITE_COMMIT:-$(git rev-parse HEAD)}}"
 
 export RAY_BUILD_ENV="manylinux_py${PYTHON}"
 

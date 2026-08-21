@@ -79,6 +79,9 @@ curl -sSfL -o /tmp/bazelisk "${BAZELISK_URL}"
 chmod +x /tmp/bazelisk
 sudo mv /tmp/bazelisk /usr/local/bin/bazelisk
 sudo ln -sf /usr/local/bin/bazelisk /usr/local/bin/bazel
+# build-manylinux-wheel.sh sets BAZEL_PATH="$HOME"/bin/bazel, so also expose
+# bazel there (not only on PATH) to make that lookup resolve directly.
+ln -sf /usr/local/bin/bazelisk "$HOME"/bin/bazel
 
 # Use python3.10 as default python3
 sudo ln -sf /usr/local/bin/python3.10 /usr/local/bin/python3
