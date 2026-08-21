@@ -62,6 +62,12 @@ sudo tar -xf /tmp/node.tar.xz -C "$NODE_DIR" --strip-components=1
 rm /tmp/node.tar.xz
 
 # Install bazel
+# The manylinux driver drops to a non-root build user but keeps HOME=/root,
+# which that user cannot write to. Take ownership of HOME so "$HOME"/bin and
+# "$HOME"/.bazelrc below (and bazel's cache during the build) can be created.
+# This replaces the interim `chmod -R 777 /root` applied on the forms side.
+sudo mkdir -p "$HOME"
+sudo chown -R "$(id -u):$(id -g)" "$HOME"
 mkdir -p "$HOME"/bin
 if [[ "${ARCH}" == "x86_64" ]]; then
   BAZELISK_URL="https://github.com/bazelbuild/bazelisk/releases/download/${BAZELISK_VERSION}/bazelisk-linux-amd64"
