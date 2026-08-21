@@ -8,7 +8,15 @@ export RAY_BUILD_ENV="manylinux_py${PYTHON}"
 
 mkdir -p .whl
 cd python
-/opt/python/"${PYTHON}"/bin/pip install -q cython==3.0.12 setuptools==80.9.0
+# Cython 3.0.12 predates CPython 3.14 and cannot compile ray's .pyx under 3.14.
+# Use a cp314-capable Cython (3.1.x) only for the py314 build so the existing
+# py311-py313 wheels stay on the unchanged 3.0.12 toolchain.
+if [[ "${PYTHON}" == "cp314-cp314" ]]; then
+  CYTHON_VERSION="3.1.8"
+else
+  CYTHON_VERSION="3.0.12"
+fi
+/opt/python/"${PYTHON}"/bin/pip install -q "cython==${CYTHON_VERSION}" setuptools==80.9.0
 # Set the commit SHA in _version.py.
 if [[ -n "$TRAVIS_COMMIT" ]]; then
   sed -i.bak "s/{{RAY_COMMIT_SHA}}/$TRAVIS_COMMIT/g" ray/_version.py && rm ray/_version.py.bak
