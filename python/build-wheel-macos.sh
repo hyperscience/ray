@@ -19,7 +19,7 @@ DOWNLOAD_DIR=python_downloads
 NODE_VERSION="14"
 
 if [ ${#PY_MMS[@]} -eq 0 ]; then
-  PY_MMS=("3.11" "3.12" "3.13")
+  PY_MMS=("3.11" "3.12" "3.13" "3.14")
 fi
 
 VENV_ROOT="$HOME/.ray_venvs"
@@ -79,8 +79,16 @@ for ((i=0; i<${#PY_MMS[@]}; ++i)); do
     TRAVIS_COMMIT=${BUILDKITE_COMMIT}
   fi
 
+  # Cython 3.0.12 predates CPython 3.14 and cannot compile ray's .pyx under
+  # 3.14; use a cp314-capable Cython for 3.14 and leave other versions unchanged.
+  if [[ "$PY_MM" == "3.14" ]]; then
+    CYTHON_VERSION="3.1.8"
+  else
+    CYTHON_VERSION="3.0.12"
+  fi
+
   pushd python
-    $PIP_CMD install -q setuptools==80.9.0 cython==3.0.12 wheel
+    $PIP_CMD install -q setuptools==80.9.0 "cython==${CYTHON_VERSION}" wheel
     # Set the commit SHA in _version.py.
     if [ -n "$TRAVIS_COMMIT" ]; then
       echo "TRAVIS_COMMIT variable detected. ray.__commit__ will be set to $TRAVIS_COMMIT"
